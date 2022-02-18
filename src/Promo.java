@@ -3,7 +3,7 @@ import java.util.Date;
 public class Promo {
     protected String promo_code = "";
     protected String details = "";
-    protected Integer short_code = 0;
+    protected String short_code = "";
     protected Date start_date;
     protected Date end_date;
 
@@ -27,11 +27,11 @@ public class Promo {
         this.details = details;
     }
 
-    public Integer getShort_code() {
+    public String getShort_code() {
         return short_code;
     }
 
-    public void setShort_code(Integer short_code) {
+    public void setShort_code(String short_code) {
         this.short_code = short_code;
     }
 

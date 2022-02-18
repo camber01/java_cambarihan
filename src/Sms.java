@@ -4,7 +4,7 @@ public class Sms {
     protected String msisdn = "";
     protected String recipient = "";
     protected String sender = "";
-    protected Integer short_code = 0;
+    protected String short_code = "";
     protected String transaction_id = "";
     protected Date timestamp;
 
@@ -36,11 +36,11 @@ public class Sms {
         this.sender = sender;
     }
 
-    public Integer getShort_code() {
+    public String getShort_code() {
         return short_code;
     }
 
-    public void setShort_code(Integer short_code) {
+    public void setShort_code(String short_code) {
         this.short_code = short_code;
     }
 
