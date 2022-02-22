@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 
 public class DatabaseConnect {
     final private static Logger logger = Logger.getLogger(DatabaseConnect.class.getName());
-    private static Connection con = null;
+    public static Connection con = null;
 
     public static void connect(){
         try{
@@ -19,7 +19,7 @@ public class DatabaseConnect {
         }
     }
 
-    private static void disconnect() {
+    public static void disconnect() {
         try{
             if(con != null){
                 con.close();
@@ -28,10 +28,5 @@ public class DatabaseConnect {
         }catch (Exception e){
             logger.log(Level.SEVERE, "Not Connected", e);
         }
-    }
-
-    public static void main(String[] args) {
-        DatabaseConnect.connect();
-        DatabaseConnect.disconnect();
     }
 }

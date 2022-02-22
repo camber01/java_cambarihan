@@ -1,14 +1,19 @@
+import java.time.LocalDateTime;
 import java.util.Date;
 
 public class Promo {
     protected String promo_code = "";
     protected String details = "";
     protected String short_code = "";
-    protected Date start_date;
-    protected Date end_date;
+    protected LocalDateTime start_date;
+    protected LocalDateTime end_date;
 
-    public static void main(String[] args) {
-
+    public Promo(String promo_code, String details, String short_code, LocalDateTime start_date, LocalDateTime end_date){
+        this.promo_code = promo_code;
+        this.details = details;
+        this.short_code = short_code;
+        this.start_date = start_date;
+        this.end_date = end_date;
     }
 
     public String getPromo_code() {
@@ -35,19 +40,19 @@ public class Promo {
         this.short_code = short_code;
     }
 
-    public Date getStart_date() {
+    public LocalDateTime getStart_date() {
         return start_date;
     }
 
-    public void setStart_date(Date start_date) {
+    public void setStart_date(LocalDateTime start_date) {
         this.start_date = start_date;
     }
 
-    public Date getEnd_date() {
+    public LocalDateTime getEnd_date() {
         return end_date;
     }
 
-    public void setEnd_date(Date end_date) {
+    public void setEnd_date(LocalDateTime end_date) {
         this.end_date = end_date;
     }
 }

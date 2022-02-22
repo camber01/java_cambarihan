@@ -6,10 +6,14 @@ public class Sms {
     protected String sender = "";
     protected String short_code = "";
     protected String transaction_id = "";
-    protected Date timestamp;
+    protected String timestamp = "";
 
-    public static void main(String[] args) {
-
+    public Sms(String msisdn, String recipient, String sender, String short_code, String timestamp){
+        this.msisdn = msisdn;
+        this.recipient = recipient;
+        this.sender = sender;
+        this.short_code = short_code;
+        this.timestamp = timestamp;
     }
 
     public String getMsisdn() {
@@ -52,11 +56,11 @@ public class Sms {
         this.transaction_id = transaction_id;
     }
 
-    public Date getTimestamp() {
+    public String getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Date timestamp) {
+    public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
 }

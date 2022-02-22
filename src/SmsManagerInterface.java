@@ -1,6 +1,7 @@
 public interface SmsManagerInterface {
 
-    public String insert_sms();
+    String insert_sms(String msisdn, String recipient, String sender, String short_code, String timestamp);
+
     public String getSmsByDate();
     public String getSmsByPromoCode();
     public String getSmsByMsisdn(String msisdn);
