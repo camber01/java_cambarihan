@@ -93,7 +93,7 @@ public class SmsManager implements SmsManagerInterface {
     @Override
     public String getSmsByDate() {
         Object date1 = 2022-02-24;
-
+/*
         try {
             String check_promo = "Select * from sms where timestamp >= " + date1;
             Statement statement = con.createStatement();
@@ -109,6 +109,8 @@ public class SmsManager implements SmsManagerInterface {
         }catch (SQLException e){
             e.printStackTrace();
         }
+
+ */
         return null;
     }
 
