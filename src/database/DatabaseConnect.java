@@ -1,7 +1,6 @@
 package database;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
+import java.sql.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,6 +26,21 @@ public class DatabaseConnect {
             }
         }catch (Exception e){
             logger.log(Level.SEVERE, "Not Connected", e);
+        }
+    }
+
+    public static void empty_db(){
+        String remove_sms = "DELETE FROM sms";
+        String remove_promo = "DELETE FROM promos";
+        Statement statement;
+        try {
+            statement = con.createStatement();
+            statement.executeUpdate(remove_sms);
+            statement.executeUpdate(remove_promo);
+
+            logger.log(Level.INFO, "Data has been removed!");
+        }catch (SQLException e){
+            e.printStackTrace();
         }
     }
 }
