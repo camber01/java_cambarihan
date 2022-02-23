@@ -1,4 +1,4 @@
-import java.util.Date;
+import java.time.LocalDateTime;
 
 public class Sms {
     protected String msisdn = "";
@@ -6,9 +6,9 @@ public class Sms {
     protected String sender = "";
     protected String short_code = "";
     protected String transaction_id = "";
-    protected String timestamp = "";
+    protected LocalDateTime timestamp;
 
-    public Sms(String msisdn, String recipient, String sender, String short_code, String timestamp){
+    public Sms(String msisdn, String recipient, String sender, String short_code, LocalDateTime timestamp){
         this.msisdn = msisdn;
         this.recipient = recipient;
         this.sender = sender;
@@ -16,9 +16,7 @@ public class Sms {
         this.timestamp = timestamp;
     }
 
-    public String getMsisdn() {
-        return msisdn;
-    }
+    public String getMsisdn() { return msisdn; }
 
     public void setMsisdn(String msisdn) {
         this.msisdn = msisdn;
@@ -32,9 +30,7 @@ public class Sms {
         this.recipient = recipient;
     }
 
-    public String getSender() {
-        return sender;
-    }
+    public String getSender() { return sender; }
 
     public void setSender(String sender) {
         this.sender = sender;
@@ -56,11 +52,11 @@ public class Sms {
         this.transaction_id = transaction_id;
     }
 
-    public String getTimestamp() {
+    public LocalDateTime getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
+    public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
 }

@@ -1,5 +1,4 @@
 import java.time.LocalDateTime;
-import java.util.Date;
 
 public class Promo {
     protected String promo_code = "";
