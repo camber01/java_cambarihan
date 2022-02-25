@@ -13,6 +13,7 @@ public class Main {
     static SmsManager smsManager = new SmsManager();
     static Promo promo;
     static Sms sms;
+    static GenerateReport generateReport = new GenerateReport();
 
     final private static Logger logger = Logger.getLogger(Main.class.getName());
 
@@ -22,7 +23,8 @@ public class Main {
         //create_promo();
         //create_sms();
         //populate_data();
-        show_data();
+        //show_data();
+        generate_report();
         DatabaseConnect.disconnect();
     }
 
@@ -31,9 +33,21 @@ public class Main {
         //smsManager.getSmsByPromoCode();
         //smsManager.getSmsByMsisdn();
         String[] msisdn = {"+6391234567843", "+6391234564567", "+6391234564569"};
-        //smsManager.getSmsByMsisdn(msisdn);
+        smsManager.getSmsByMsisdn(msisdn);
         //smsManager.getSmsBySent();
-        smsManager.getSmsByReceive();
+        //smsManager.getSmsByReceive();
+    }
+
+    public static void generate_report(){
+        //generateReport.FailedTransaction();
+        //generateReport.FailedSentTransaction();
+        //generateReport.FailedReceivedTransaction();
+        //generateReport.SuccessfulTransaction();
+        //generateReport.SuccessfulSentTransaction();
+        //generateReport.SuccessfulReceivedTransaction();
+        generateReport.PersonRegistered();
+        generateReport.SmsReceived();
+        generateReport.SmsSent();
     }
 
     public static void create_sms(){

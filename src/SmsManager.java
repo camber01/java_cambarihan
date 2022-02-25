@@ -219,13 +219,13 @@ public class SmsManager implements SmsManagerInterface {
     public void getSmsByMsisdn(String[] msisdn) {
         isEmpty = true;
 
-        for (int i = 0; i < msisdn.length; i++) {
-            String sql_query = "Select * from sms where msisdn = " + msisdn[i];
+        for (String s : msisdn) {
+            String sql_query = "Select * from sms where msisdn = " + s;
             process_sms(sql_query);
-            if (isEmpty){
-                logger.log(Level.INFO, "No sms found with Mobile Number \"" + msisdn[i] + "\"");
-            }
-            else{
+
+            if (isEmpty) {
+                logger.log(Level.INFO, "No sms found with Mobile Number \"" + s + "\"");
+            } else {
                 show_result(sms_result);
             }
         }
