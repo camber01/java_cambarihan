@@ -29,7 +29,11 @@ public class Main {
     private static void show_data() {
         //smsManager.getSmsByDate();
         //smsManager.getSmsByPromoCode();
-        smsManager.getSmsByMsisdn("+639123456780");
+        //smsManager.getSmsByMsisdn();
+        String[] msisdn = {"+6391234567843", "+6391234564567", "+6391234564569"};
+        //smsManager.getSmsByMsisdn(msisdn);
+        //smsManager.getSmsBySent();
+        smsManager.getSmsByReceive();
     }
 
     public static void create_sms(){

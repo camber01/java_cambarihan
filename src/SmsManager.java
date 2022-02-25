@@ -1,5 +1,6 @@
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -12,9 +13,11 @@ public class SmsManager implements SmsManagerInterface {
 
     Sms sms;
     final private static Logger logger = Logger.getLogger(SmsManager.class.getName());
+    ArrayList<Object> sms_result = new ArrayList<>();
+    Boolean isEmpty;
 
     @Override
-    public String insert_sms(ArrayList<Object> smsList) {
+    public void insert_sms(ArrayList<Object> smsList) {
         try {
             if (!con.isClosed()) {
                 for (Object message : smsList) {
@@ -51,7 +54,6 @@ public class SmsManager implements SmsManagerInterface {
         }catch (SQLException e){
             e.printStackTrace();
         }
-        return null;
     }
 
     public Boolean sms_checker(String recipient, LocalDateTime timestamp){
@@ -90,82 +92,142 @@ public class SmsManager implements SmsManagerInterface {
         return customer_name;
     }
 
-    @Override
-    public String getSmsByDate() {
-        Object date1 = 2022-02-24;
-/*
+    public void show_result(ArrayList<Object> sms_result){
+        for (Object result : sms_result) {
+            sms = (Sms) result;
+            logger.log(Level.INFO, "Mobile Number: " + sms.getMsisdn() +
+                    "\n Recipient: " + sms.getRecipient() +
+                    "\n Sender: " + sms.getSender() +
+                    "\n Short Code: " + sms.getShort_code() +
+                    "\n Timestamp: " + sms.getTimestamp());
+        }
+        sms_result.clear();
+    }
+
+    public void process_sms(String sql_query){
+        Statement statement = null;
         try {
-            String check_promo = "Select * from sms where timestamp >= " + date1;
-            Statement statement = con.createStatement();
-            ResultSet rs = statement.executeQuery(check_promo);
+            statement = con.createStatement();
+            ResultSet rs = statement.executeQuery(sql_query);
 
             while (rs.next()){
-                logger.log(Level.INFO, "Mobile Number: " + rs.getString("msisdn") +
-                                "\n Recipient: " + rs.getString("recipient") +
-                                "\n Sender: " + rs.getString("sender") +
-                                "\n Short Code: " + rs.getString("short_code") +
-                                "\n Timestamp: " + rs.getTimestamp("timestamp"));
+                sms = new Sms(rs.getString(2), rs.getString(3),
+                        rs.getString(4), rs.getString(5), rs.getTimestamp(7).toLocalDateTime());
+                sms_result.add(sms);
+                isEmpty = false;
             }
         }catch (SQLException e){
             e.printStackTrace();
+        }finally {
+            try {
+                if (statement != null){
+                    statement.close();
+                }
+            }catch (Exception e){
+                logger.log(Level.SEVERE, "Error in Closing", e);
+            }
         }
+    }
 
- */
+    @Override
+    public String getSmsByDate() {
+        DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDateTime start_date = LocalDateTime.of(2022, Month.FEBRUARY, 21, 0, 0);
+        LocalDateTime end_date = LocalDateTime.of(2022, Month.FEBRUARY, 23, 0, 0);
+
+        isEmpty = true;
+
+        String sql_query = "SELECT * FROM sms WHERE timestamp BETWEEN \"" + start_date.format(format) + "\" and \"" + end_date.format(format) + "\"";
+        process_sms(sql_query);
+
+        if (isEmpty){
+            logger.log(Level.INFO, "No sms found starting from " + start_date + " to " + end_date);
+        }
+        else{
+            show_result(sms_result);
+        }
         return null;
     }
 
     @Override
     public String getSmsByPromoCode() {
-        try {
-            String sql_query = "Select * from sms where short_code = \"PISO PIZZA\"";
-            Statement statement = con.createStatement();
-            ResultSet rs = statement.executeQuery(sql_query);
+        isEmpty = true;
+        String short_code = "PISO PIZZA";
 
-            while (rs.next()){
-                logger.log(Level.INFO, "Mobile Number: " + rs.getString("msisdn") +
-                        "\n Recipient: " + rs.getString("recipient") +
-                        "\n Sender: " + rs.getString("sender") +
-                        "\n Short Code: " + rs.getString("short_code") +
-                        "\n Timestamp: " + rs.getTimestamp("timestamp"));
-            }
-        }catch (SQLException e){
-            e.printStackTrace();
+        String sql_query = "Select * from sms where short_code = \"" + short_code +"\"";
+        process_sms(sql_query);
+
+        if (isEmpty){
+            logger.log(Level.INFO, "No sms found with Short Code \"" + short_code + "\"");
+        }
+        else{
+            show_result(sms_result);
         }
         return null;
     }
 
     @Override
-    public String getSmsByMsisdn(String msisdn) {
-        try {
-            String sql_query = "Select * from sms where msisdn = " + msisdn;
-            Statement statement = con.createStatement();
-            ResultSet rs = statement.executeQuery(sql_query);
+    public String getSmsByMsisdn() {
+        isEmpty = true;
+        String msisdn = "+639123456780";
+        String sql_query = "Select * from sms where msisdn = " + msisdn;
 
-            while (rs.next()){
-                logger.log(Level.INFO, "Mobile Number: " + rs.getString("msisdn") +
-                        "\n Recipient: " + rs.getString("recipient") +
-                        "\n Sender: " + rs.getString("sender") +
-                        "\n Short Code: " + rs.getString("short_code") +
-                        "\n Timestamp: " + rs.getTimestamp("timestamp"));
-            }
-        }catch (SQLException e){
-            e.printStackTrace();
+        process_sms(sql_query);
+
+        if (isEmpty){
+            logger.log(Level.INFO, "No sms found with Mobile Number \"" + msisdn + "\"");
+        }
+        else{
+            show_result(sms_result);
         }
         return null;
     }
 
     @Override
     public String getSmsBySent() {
+        isEmpty = true;
+        String sql_query = "Select * from sms where status = false";
+
+        process_sms(sql_query);
+
+        if (isEmpty){
+            logger.log(Level.INFO, "No sms found");
+        }
+        else{
+            show_result(sms_result);
+        }
         return null;
     }
 
     @Override
     public String getSmsByReceive() {
+        isEmpty = true;
+        String sql_query = "Select * from sms where status = true";
+
+        process_sms(sql_query);
+
+        if (isEmpty){
+            logger.log(Level.INFO, "No sms found");
+        }
+        else{
+            show_result(sms_result);
+        }
         return null;
     }
 
     @Override
-    public String getSmsByMsisdn(String[] msisdn) {
-        return null;
+    public void getSmsByMsisdn(String[] msisdn) {
+        isEmpty = true;
+
+        for (int i = 0; i < msisdn.length; i++) {
+            String sql_query = "Select * from sms where msisdn = " + msisdn[i];
+            process_sms(sql_query);
+            if (isEmpty){
+                logger.log(Level.INFO, "No sms found with Mobile Number \"" + msisdn[i] + "\"");
+            }
+            else{
+                show_result(sms_result);
+            }
+        }
     }
 }
