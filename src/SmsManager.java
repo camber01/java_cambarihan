@@ -3,52 +3,44 @@ import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import static database.DatabaseConnect.con;
 
 public class SmsManager implements SmsManagerInterface {
 
     Sms sms;
-    final private static Logger logger = Logger.getLogger(SmsManager.class.getName());
+    boolean isEmpty;
     ArrayList<Object> sms_result = new ArrayList<>();
-    Boolean isEmpty;
+    final private static Logger logger = Logger.getLogger(SmsManager.class.getName());
 
     @Override
-    public void insert_sms(ArrayList<Object> smsList) {
+    public void insert_sms(Sms sms, boolean status){
         try {
             if (!con.isClosed()) {
-                for (Object message : smsList) {
-                    try {
-                        sms = (Sms) message;
-                        Boolean status = sms_checker(sms.getRecipient(), sms.getTimestamp());
+                try {
+                    PreparedStatement sql_sms = con.prepareStatement(
+                            "Insert into sms (msisdn, recipient, sender, short_code, transaction_id, timestamp, status, register) values (?,?,?,?,?,?,?,?)");
+                    sql_sms.setString(1, sms.getMsisdn());
+                    sql_sms.setString(2, sms.getRecipient());
+                    sql_sms.setString(3, sms.getSender());
+                    sql_sms.setObject(4, sms.getShort_code());
+                    sql_sms.setObject(5, sms.getTransactionId());
+                    sql_sms.setObject(6, sms.getTimestamp());
+                    sql_sms.setObject(7, status);
+                    sql_sms.setObject(8, sms.isRegister());
 
-                        PreparedStatement sql_sms = con.prepareStatement(
-                                "Insert into sms (msisdn, recipient, sender, short_code, timestamp, status) values (?,?,?,?,?,?)");
-                        sql_sms.setString(1, sms.getMsisdn());
-                        sql_sms.setString(2, sms.getRecipient());
-                        if (status && sms.getShort_code().equals("REGISTER"))
-                            sql_sms.setString(3, registerCustomer());
-                        else
-                            sql_sms.setString(3, sms.getSender());
-                        sql_sms.setObject(4, sms.getShort_code());
-                        sql_sms.setObject(5, sms.getTimestamp());
-                        sql_sms.setObject(6, status);
-
-                        int row = sql_sms.executeUpdate();
-                        if (row > 0 && status) {
-                            logger.log(Level.INFO, "Sms successfully sent!");
-                        } else {
-                            logger.log(Level.WARNING, "Failed to send sms!");
-                        }
-                    }catch (SQLException e){
-                        e.printStackTrace();
+                    int row = sql_sms.executeUpdate();
+                    if (row > 0 && status) {
+                        logger.log(Level.INFO, "Sms successfully sent!");
+                    } else {
+                        logger.log(Level.WARNING, "Failed to send sms!");
                     }
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
-            }
-            else {
+            } else {
                 logger.log(Level.SEVERE, "Failed to connect to Database!");
             }
         }catch (SQLException e){
@@ -56,45 +48,49 @@ public class SmsManager implements SmsManagerInterface {
         }
     }
 
-    public Boolean sms_checker(String recipient, LocalDateTime timestamp){
-        Boolean status = null;
+    public void sms_checker(Sms sms){
         try {
-            String check_promo = "Select * from promos" + " where short_code = " + recipient;
+            String check_promo = "Select * from promos" + " where short_code = " + sms.getShort_code();
             Statement statement = con.createStatement();
             ResultSet rs = statement.executeQuery(check_promo);
 
             if (!rs.next()){
-                status = false;
                 logger.log(Level.INFO, "Invalid Promo Code!");
             }
             else{
-                if ( timestamp.isAfter(rs.getTimestamp("start_date").toLocalDateTime())
-                        && timestamp.isBefore(rs.getTimestamp("end_date").toLocalDateTime())) {
-                    logger.log(Level.INFO, "\n Mobile Number: " + sms.getMsisdn() + "\n Message: PROMO CODE ACCEPTED \n Short Code:" + sms.getShort_code());
-                    status = true;
+                if ( sms.getTimestamp().isAfter(rs.getTimestamp("start_date").toLocalDateTime())
+                        && sms.getTimestamp().isBefore(rs.getTimestamp("end_date").toLocalDateTime())) {
+                    if (sms.register && sms.sender.equals("system"))
+                        logger.log(Level.INFO, sms.recipient + " has been successfully registered.");
+                    else
+                        logger.log(Level.INFO, "\n Mobile Number: " + sms.getMsisdn() + "\n Message: PROMO CODE ACCEPTED \n Short Code:" + sms.getShort_code());
+
+                    sms.setTransactionId(generateTransactionId());
+                    insert_sms(sms, true);
                 }
                 else{
                     logger.log(Level.INFO, "\n Mobile Number: " + sms.getMsisdn() + "\n Message: PROMO CODE NOT AVAILABLE \n Short Code:" + sms.getShort_code());
-                    status = false;
+                    sms.setTransactionId(generateTransactionId());
+                    insert_sms(sms, false);
                 }
             }
         }catch (SQLException e){
             logger.log(Level.INFO, "Promo not found!", e);
         }
-        return status;
     }
 
-    private String registerCustomer() {
-        Scanner myObj = new Scanner(System.in);
-        System.out.println("To complete the promo registration, please send complete name:");
-        String customer_name = myObj.nextLine();
+    public String generateTransactionId(){
+        Random random = new Random();
+        int id = random.nextInt(1300 * 22);
+        String tranId = "TRAN" + id;
 
-        return customer_name;
+        return tranId;
     }
 
     public void show_result(ArrayList<Object> sms_result){
         for (Object result : sms_result) {
             sms = (Sms) result;
+
             logger.log(Level.INFO, "Mobile Number: " + sms.getMsisdn() +
                     "\n Recipient: " + sms.getRecipient() +
                     "\n Sender: " + sms.getSender() +
@@ -112,7 +108,8 @@ public class SmsManager implements SmsManagerInterface {
 
             while (rs.next()){
                 sms = new Sms(rs.getString(2), rs.getString(3),
-                        rs.getString(4), rs.getString(5), rs.getTimestamp(7).toLocalDateTime());
+                        rs.getString(4), rs.getString(5), rs.getString(6),
+                        rs.getTimestamp(7).toLocalDateTime(), rs.getBoolean(8));
                 sms_result.add(sms);
                 isEmpty = false;
             }
@@ -130,10 +127,13 @@ public class SmsManager implements SmsManagerInterface {
     }
 
     @Override
-    public String getSmsByDate() {
+    public void getSmsByDate() {
+        logger.log(Level.INFO, "=============================\n" +
+                "\tSms by Start and End date.\n" +
+                "\t=============================");
         DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDateTime start_date = LocalDateTime.of(2022, Month.FEBRUARY, 21, 0, 0);
-        LocalDateTime end_date = LocalDateTime.of(2022, Month.FEBRUARY, 23, 0, 0);
+        LocalDateTime end_date = LocalDateTime.of(2022, Month.FEBRUARY, 25, 0, 0);
 
         isEmpty = true;
 
@@ -146,28 +146,32 @@ public class SmsManager implements SmsManagerInterface {
         else{
             show_result(sms_result);
         }
-        return null;
     }
 
     @Override
-    public String getSmsByPromoCode() {
+    public void getSmsByPromoCode() {
+        logger.log(Level.INFO, "=============================\n" +
+                "\tSms by Promo Code.\n" +
+                "\t=============================");
         isEmpty = true;
-        String short_code = "PISO PIZZA";
+        String promoCode = "PISO PIZZA";
 
-        String sql_query = "Select * from sms where short_code = \"" + short_code +"\"";
+        String sql_query = "select * from sms.sms inner join sms.promos where promo_code = \"" + promoCode +"\" and sms.short_code = promos.short_code;";
         process_sms(sql_query);
 
         if (isEmpty){
-            logger.log(Level.INFO, "No sms found with Short Code \"" + short_code + "\"");
+            logger.log(Level.INFO, "No sms found with Promo Code \"" + promoCode + "\"");
         }
         else{
             show_result(sms_result);
         }
-        return null;
     }
 
     @Override
-    public String getSmsByMsisdn() {
+    public void getSmsByMsisdn() {
+        logger.log(Level.INFO, "=============================\n" +
+                "\tSms by Mobile Number.\n" +
+                "\t=============================");
         isEmpty = true;
         String msisdn = "+639123456780";
         String sql_query = "Select * from sms where msisdn = " + msisdn;
@@ -180,13 +184,15 @@ public class SmsManager implements SmsManagerInterface {
         else{
             show_result(sms_result);
         }
-        return null;
     }
 
     @Override
-    public String getSmsBySent() {
+    public void getSmsSentByTheSystem() {
+        logger.log(Level.INFO, "=============================\n" +
+                "\tSms sent by the System.\n" +
+                "\t=============================");
         isEmpty = true;
-        String sql_query = "Select * from sms where status = false";
+        String sql_query = "Select * from sms where sender = \"system\"";
 
         process_sms(sql_query);
 
@@ -196,13 +202,15 @@ public class SmsManager implements SmsManagerInterface {
         else{
             show_result(sms_result);
         }
-        return null;
     }
 
     @Override
-    public String getSmsByReceive() {
+    public void getSmsReceiveByTheSystem() {
+        logger.log(Level.INFO, "=============================\n" +
+                "\tSms received by the system.\n" +
+                "\t=============================");
         isEmpty = true;
-        String sql_query = "Select * from sms where status = true";
+        String sql_query = "Select * from sms where recipient = \"system\"";
 
         process_sms(sql_query);
 
@@ -212,19 +220,21 @@ public class SmsManager implements SmsManagerInterface {
         else{
             show_result(sms_result);
         }
-        return null;
     }
 
     @Override
     public void getSmsByMsisdn(String[] msisdn) {
+        logger.log(Level.INFO, "=============================\n" +
+                "\tSms by multiple mobile numbers.\n" +
+                "\t=============================");
         isEmpty = true;
 
-        for (String s : msisdn) {
-            String sql_query = "Select * from sms where msisdn = " + s;
+        for (String mNumber : msisdn) {
+            String sql_query = "Select * from sms where msisdn = " + mNumber;
             process_sms(sql_query);
 
             if (isEmpty) {
-                logger.log(Level.INFO, "No sms found with Mobile Number \"" + s + "\"");
+                logger.log(Level.INFO, "No sms found with Mobile Number \"" + mNumber + "\"");
             } else {
                 show_result(sms_result);
             }

@@ -9,21 +9,21 @@ import static database.DatabaseConnect.con;
 
 public class GenerateReport implements ReportInterface {
 
-    final private static Logger logger = Logger.getLogger(GenerateReport.class.getName());
     Sms sms;
-    Boolean isEmpty;
+    boolean isEmpty;
     ArrayList<Object> sms_report =  new ArrayList<>();
+    final private static Logger logger = Logger.getLogger(GenerateReport.class.getName());
 
     public void process_sms(String sql_query){
         Statement statement = null;
-
         try {
             statement = con.createStatement();
             ResultSet rs = statement.executeQuery(sql_query);
 
             while (rs.next()){
                 sms = new Sms(rs.getString(2), rs.getString(3),
-                        rs.getString(4), rs.getString(5), rs.getTimestamp(7).toLocalDateTime());
+                        rs.getString(4), rs.getString(5), rs.getString(6),
+                        rs.getTimestamp(7).toLocalDateTime(), rs.getBoolean(8));
                 sms_report.add(sms);
                 isEmpty = false;
             }
@@ -53,13 +53,13 @@ public class GenerateReport implements ReportInterface {
     }
 
     @Override
-    public String FailedTransaction() {
+    public void FailedTransaction() {
         isEmpty = true;
 
         logger.log(Level.INFO, "=================================\n" +
                 "\t\tList of Failed Transaction" +
                 "\n\t  =================================");
-        String sql_query = "Select * from sms where status = false";
+        String sql_query = "Select * from sms where status = false and short_code = \"1234555\"";
         process_sms(sql_query);
 
         if (isEmpty){
@@ -68,18 +68,17 @@ public class GenerateReport implements ReportInterface {
         else{
             show_result();
         }
-        return null;
     }
 
     @Override
-    public String FailedSentTransaction() {
+    public void FailedSentTransaction() {
         isEmpty = true;
 
         logger.log(Level.INFO, "=================================\n" +
                 "\t\tList of Failed Sent Transaction" +
                 "\n\t  =================================");
 
-        String sql_query = "Select * from sms where status = false and short_code != \"REGISTER\"";
+        String sql_query = "Select * from sms where short_code = \"1234555\" and status = false and sender != \"system\"";
         process_sms(sql_query);
 
         if (isEmpty){
@@ -88,19 +87,17 @@ public class GenerateReport implements ReportInterface {
         else{
             show_result();
         }
-
-        return null;
     }
 
     @Override
-    public String FailedReceivedTransaction() {
+    public void FailedReceivedTransaction() {
         isEmpty = true;
 
         logger.log(Level.INFO, "=================================\n" +
                 "\t\tList of Failed Received Transaction" +
                 "\n\t  =================================");
 
-        String sql_query = "Select * from sms where status = false and short_code = \"REGISTER\"";
+        String sql_query = "Select * from sms where short_code = \"1234555\" and status = false and recipient != \"system\"";
         process_sms(sql_query);
 
         if (isEmpty){
@@ -109,17 +106,16 @@ public class GenerateReport implements ReportInterface {
         else{
             show_result();
         }
-        return null;
     }
 
     @Override
-    public String SuccessfulTransaction() {
+    public void SuccessfulTransaction() {
         isEmpty = true;
 
         logger.log(Level.INFO, "=================================\n" +
                 "\t\tList of Successful Transaction" +
                 "\n\t  =================================");
-        String sql_query = "Select * from sms where status = true";
+        String sql_query = "Select * from sms where status = true and short_code = \"1234555\"";
         process_sms(sql_query);
 
         if (isEmpty){
@@ -128,58 +124,55 @@ public class GenerateReport implements ReportInterface {
         else{
             show_result();
         }
-        return null;
     }
 
     @Override
-    public String SuccessfulSentTransaction() {
+    public void SuccessfulSentTransaction() {
         isEmpty = true;
 
         logger.log(Level.INFO, "=================================\n" +
                 "\t\tList of Successful Sent Transaction" +
                 "\n\t  =================================");
-        String sql_query = "Select * from sms where status = true and short_code != \"REGISTER\"";
+        String sql_query = "Select * from sms where short_code = \"1234555\" and status = true and sender != \"system\"";
         process_sms(sql_query);
 
         if (isEmpty){
-            logger.log(Level.INFO, "No successful sent transaction found.");
+            logger.log(Level.INFO, "No sent transaction found.");
         }
         else{
             show_result();
         }
-        return null;
     }
 
     @Override
-    public String SuccessfulReceivedTransaction() {
+    public void SuccessfulReceivedTransaction() {
         isEmpty = true;
 
         logger.log(Level.INFO, "=================================\n" +
                 "\t\tList of Successful Received Transaction" +
                 "\n\t  =================================");
-        String sql_query = "Select * from sms where status = true and short_code = \"REGISTER\"";
+        String sql_query = "Select * from sms where short_code = \"1234555\" and status = true and recipient != \"system\"";
         process_sms(sql_query);
 
         if (isEmpty){
-            logger.log(Level.INFO, "No successful sent transaction found.");
+            logger.log(Level.INFO, "No received transaction found.");
         }
         else{
             show_result();
         }
-        return null;
     }
 
     @Override
-    public String PersonRegistered() {
+    public void PersonRegistered() {
         sms_report.clear();
-
-        Statement statement = null;
         isEmpty = true;
+        Statement statement = null;
 
         logger.log(Level.INFO, "=================================\n" +
                 "\t\tList of Person Registered" +
                 "\n\t  =================================");
-        String sql_query = "Select distinct sender from sms where status = true and short_code = \"REGISTER\"";
+
+        String sql_query = "Select distinct recipient from sms where status = true and short_code = \"1234555\" and register = true";
         try {
             statement = con.createStatement();
             ResultSet rs = statement.executeQuery(sql_query);
@@ -201,18 +194,17 @@ public class GenerateReport implements ReportInterface {
         }
 
         if (isEmpty){
-            logger.log(Level.INFO, "No successful sent transaction found.");
+            logger.log(Level.INFO, "No registered person found.");
         }
         else{
             for (Object result : sms_report){
                 logger.log(Level.INFO, (String) result);
             }
         }
-        return null;
     }
 
     @Override
-    public String SmsReceived() {
+    public void SmsReceived() {
         sms_report.clear();
         Statement statement =null;
         isEmpty = true;
@@ -220,7 +212,7 @@ public class GenerateReport implements ReportInterface {
         logger.log(Level.INFO, "=================================\n" +
                 "\t\tTotal Sms Received" +
                 "\n\t  =================================");
-        String sql_query = "Select count(*) from sms where short_code != \"REGISTER\"";
+        String sql_query = "Select count(*) from sms where short_code != \"1234555\" and recipient != \"system\"";
         try {
             statement = con.createStatement();
             ResultSet rs = statement.executeQuery(sql_query);
@@ -242,25 +234,24 @@ public class GenerateReport implements ReportInterface {
         }
 
         if (isEmpty){
-            logger.log(Level.INFO, "No sms received found.");
+            logger.log(Level.INFO, "No sms found.");
         }
         else{
             for (Object result : sms_report){
                 logger.log(Level.INFO, (String) result);
             }
         }
-        return null;
     }
 
     @Override
-    public String SmsSent() {sms_report.clear();
+    public void SmsSent() {sms_report.clear();
         Statement statement =null;
         isEmpty = true;
 
         logger.log(Level.INFO, "=================================\n" +
                 "\t\tTotal Sms Sent" +
                 "\n\t  =================================");
-        String sql_query = "Select count(*) from sms where short_code = \"REGISTER\"";
+        String sql_query = "Select count(*) from sms where short_code = \"1234555\" and sender != \"system\"";
         try {
             statement = con.createStatement();
             ResultSet rs = statement.executeQuery(sql_query);
@@ -282,13 +273,12 @@ public class GenerateReport implements ReportInterface {
         }
 
         if (isEmpty){
-            logger.log(Level.INFO, "No sms sent found.");
+            logger.log(Level.INFO, "No sms found.");
         }
         else{
             for (Object result : sms_report){
                 logger.log(Level.INFO, (String) result);
             }
         }
-        return null;
     }
 }
